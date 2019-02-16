@@ -1,13 +1,22 @@
 ﻿using System;
-using System.Drawing;
 using System.Windows.Forms;
 using CefSharp;
 using CefSharp.WinForms;
+using Komunikator.Handlers;
 
-namespace Messenger
+namespace Komunikator
 {
     public partial class FormMain : Form
     {
+        readonly ChromiumWebBrowser _browserMessenger;
+        private bool _browserMessengerInitialized = false;
+
+        readonly ChromiumWebBrowser _browserGg;
+        private bool _browserGgInitialized = false;
+
+        readonly ChromiumWebBrowser _browserWhatsapp;
+        private bool _browserWhatsappInitialized = false;
+
         public FormMain()
         {
 
@@ -18,47 +27,91 @@ namespace Messenger
             };
 
             Cef.EnableHighDPISupport();
-            CefSharpSettings.ShutdownOnExit = true;
 
             Cef.Initialize(settings, performDependencyCheck: true, browserProcessHandler: null);
 
-            TabControl tabControl = new TabControl
+            // --------------------------------------------------------------------------------------------------------------------------------------
+
+            _browserMessenger = new ChromiumWebBrowser("https://www.messenger.com")
             {
                 Dock = DockStyle.Fill,
-                Alignment = TabAlignment.Bottom,
-                SizeMode = TabSizeMode.Fixed,
-                ItemSize = new Size(100, 25)
+                DownloadHandler = new DownloadHandler(),
+                RequestHandler = new RequestHandler()
             };
+            _browserMessenger.LoadingStateChanged += BrowserMessenger_LoadingStateChanged;
 
-            TabPage pageMessenger = new TabPage("Messenger");
-            tabControl.TabPages.Add(pageMessenger);
+            // --------------------------------------------------------------------------------------------------------------------------------------
 
-            ChromiumWebBrowser browserMessenger = new ChromiumWebBrowser("https://www.messenger.com");
-            browserMessenger.Dock = DockStyle.Fill;
-            pageMessenger.Controls.Add(browserMessenger);
+            _browserGg = new ChromiumWebBrowser("https://gg.pl")
+            {
+                Dock = DockStyle.Fill,
+                DownloadHandler = new DownloadHandler(),
+                RequestHandler = new RequestHandler()
+            };
+            _browserGg.LoadingStateChanged += BrowserGg_LoadingStateChanged;
 
-            TabPage pageMessages = new TabPage("Wiadomości");
-            tabControl.TabPages.Add(pageMessages);
+            // --------------------------------------------------------------------------------------------------------------------------------------
 
-            ChromiumWebBrowser browserMessages = new ChromiumWebBrowser("https://messages.android.com/");
-            browserMessages.Dock = DockStyle.Fill;
-            pageMessages.Controls.Add(browserMessages);
+            _browserWhatsapp = new ChromiumWebBrowser("https://web.whatsapp.com")
+            {
+                Dock = DockStyle.Fill,
+                DownloadHandler = new DownloadHandler(),
+                RequestHandler = new RequestHandler()
+            };
+            _browserWhatsapp.LoadingStateChanged += BrowserWhatsapp_LoadingStateChanged;
 
-            TabPage pageWhatsapp = new TabPage("WhatsApp");
-            tabControl.TabPages.Add(pageWhatsapp);
-
-            ChromiumWebBrowser browserWhatsapp = new ChromiumWebBrowser("https://web.whatsapp.com/");
-            browserWhatsapp.Dock = DockStyle.Fill;
-            pageWhatsapp.Controls.Add(browserWhatsapp);
-
-            Controls.Add(tabControl);
+            // --------------------------------------------------------------------------------------------------------------------------------------
 
             InitializeComponent();
         }
 
-        private void FormMain_Load(object sender, EventArgs e)
+        private void BrowserMessenger_LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
         {
 
+            if (e.IsLoading == false)
+            {
+                _browserMessengerInitialized = true;
+
+                if (_browserGgInitialized == false)
+                {
+                    tabControl.Invoke((MethodInvoker) (() => tabControl.SelectTab("tabPageGG")));
+                }
+            }
+        }
+
+        private void BrowserGg_LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
+        {
+            if (e.IsLoading == false)
+            {
+                _browserGgInitialized = true;
+
+                if (_browserWhatsappInitialized == false)
+                {
+                    tabControl.Invoke((MethodInvoker) (() => tabControl.SelectTab("tabPageWhatsApp")));
+                }
+            }
+        }
+
+        private void BrowserWhatsapp_LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
+        {
+            if (e.IsLoading == false)
+            {
+                _browserWhatsappInitialized = true;
+
+                if (_browserMessengerInitialized == false)
+                {
+                    tabControl.Invoke((MethodInvoker) (() => tabControl.SelectTab("tabPageMessenger")));
+                }
+            }
+        }
+
+        private void FormMain_Load(object sender, EventArgs e)
+        {
+            tabPageMessenger.Controls.Add(_browserMessenger);
+            
+            tabPageGG.Controls.Add(_browserGg);
+
+            tabPageWhatsApp.Controls.Add(_browserWhatsapp);
         }
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
