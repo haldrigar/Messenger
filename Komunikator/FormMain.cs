@@ -13,27 +13,42 @@ namespace Komunikator
         [DllImport("user32.dll")]
         static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
 
-        ChromiumWebBrowser _browserMessenger;
-        private bool _browserMessengerInitialized;
-        private bool _tabMessengerUnread;
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
 
-        ChromiumWebBrowser _browserGg;
-        private bool _browserGgInitialized;
-        private bool _tabGgUnread;
+        private bool IsActive(IntPtr handle)
+        {
+            IntPtr activeHandle = GetForegroundWindow();
+            return (activeHandle == handle);
+        }
 
-        ChromiumWebBrowser _browserWhatsapp;
-        private bool _browserWhatsappInitialized;
-        private bool _tabWhatsappUnread;
+        ChromiumWebBrowser _messengerWebBrowser;
+        private bool _messengerWebBrowserInitialized;
+        private bool _messengerTabUnread;
 
-        ChromiumWebBrowser _browserSkype;
-        private bool _browserSkypeInitialized;
-        private bool _tabSkypeUnread;
+        ChromiumWebBrowser _ggWebBrowser;
+        private bool _ggWebBrowserInitialized;
+        private bool _ggTabUnread;
 
-        ChromiumWebBrowser _browserSlackOpgk;
-        private bool _browserSlackOpgkInitialized;
-        private bool _tabSlackOpgkUnread;
+        ChromiumWebBrowser _whatsAppWebBrowser;
+        private bool _whatsAppWebBrowserInitialized;
+        private bool _whatsAppTabUnread;
 
+        ChromiumWebBrowser _skypeWebBrowser;
+        private bool _skypeWebBrowserInitialized;
+        private bool _skypeTabUnread;
 
+        ChromiumWebBrowser _slackOpgkWebBrowser;
+        private bool _slackOpgkWebBrowserInitialized;
+        private bool _slackTabOpgkUnread;
+
+        ChromiumWebBrowser _slackGisnetWebBrowser;
+        private bool _slackGisnetWebBrowserInitialized;
+        private bool _slackTabGisnetUnread;
+
+        ChromiumWebBrowser _smsWebBrowser;
+        private bool _smsWebBrowserInitialized;
+        private bool _smsTabUnread;
 
         public FormMain()
         {
@@ -47,283 +62,395 @@ namespace Komunikator
             CefSettings settings = new CefSettings
             {
                 CachePath = AppDomain.CurrentDomain.BaseDirectory + @"\cache",
-                Locale = "pl"
+                Locale = "pl",
+                LogSeverity = LogSeverity.Warning
             };
 
             settings.CefCommandLineArgs.Add("enable-media-stream", "1");
+            settings.CefCommandLineArgs.Add("no-proxy-server", "1");
+            settings.CefCommandLineArgs.Add("allow-running-insecure-content", "1");
+            
+            //settings.SetOffScreenRenderingBestPerformanceArgs();
+ 
+            //settings.CefCommandLineArgs.Add("disable-gpu-vsync", "1");
+            //settings.CefCommandLineArgs.Add("disable-direct-write", "1");
 
 
-            Cef.EnableHighDPISupport();
+            //Cef.EnableHighDPISupport();
 
 
-            Cef.Initialize(settings, performDependencyCheck: true, browserProcessHandler: null);
+            Cef.Initialize(settings);
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
-            _browserMessenger = new ChromiumWebBrowser("https://www.messenger.com")
+            _messengerWebBrowser = new ChromiumWebBrowser("https://www.messenger.com")
             {
+                Name = "Messenger",
                 Dock = DockStyle.Fill,
                 DownloadHandler = new DownloadHandler(),
                 RequestHandler = new RequestHandler()
             };
 
-            _browserMessenger.LoadingStateChanged += BrowserMessenger_LoadingStateChanged;
-            _browserMessenger.TitleChanged += OnBrowserMessengerTitleChanged;
+            _messengerWebBrowser.TitleChanged += OnMessengerWebBrowserTitleChanged;
+            _messengerWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
-            _browserGg = new ChromiumWebBrowser("https://gg.pl")
+            _ggWebBrowser = new ChromiumWebBrowser("https://gg.pl")
             {
+                Name = "GG",
                 Dock = DockStyle.Fill,
                 DownloadHandler = new DownloadHandler(),
                 RequestHandler = new RequestHandler()
             };
 
-            _browserGg.LoadingStateChanged += BrowserGg_LoadingStateChanged;
-            _browserGg.TitleChanged += OnBrowserGgTitleChanged;
+            _ggWebBrowser.TitleChanged += OnGgWebBrowserTitleChanged;
+            _ggWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
-            _browserWhatsapp = new ChromiumWebBrowser("https://web.whatsapp.com")
+            _whatsAppWebBrowser = new ChromiumWebBrowser("https://web.whatsapp.com")
             {
+                Name = "WhatsApp",
                 Dock = DockStyle.Fill,
                 DownloadHandler = new DownloadHandler(),
                 RequestHandler = new RequestHandler()
             };
 
-            _browserWhatsapp.LoadingStateChanged += BrowserWhatsapp_LoadingStateChanged;
-            _browserWhatsapp.TitleChanged += OnBrowserWhatsappTitleChanged;
+            _whatsAppWebBrowser.TitleChanged += OnWhatsAppWebBrowserTitleChanged;
+            _whatsAppWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
-            _browserSkype = new ChromiumWebBrowser("https://preview.web.skype.com")
+            _skypeWebBrowser = new ChromiumWebBrowser("https://preview.web.skype.com")
             {
+                Name = "Skype",
                 Dock = DockStyle.Fill,
                 DownloadHandler = new DownloadHandler(),
                 RequestHandler = new RequestHandler()
             };
-            _browserSkype.LoadingStateChanged += BrowserSkype_LoadingStateChanged;
-            _browserSkype.TitleChanged += OnBrowserSkypeTitleChanged;
+
+            _skypeWebBrowser.TitleChanged += OnSkypeWebBrowserTitleChanged;
+            _skypeWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
-            _browserSlackOpgk = new ChromiumWebBrowser("https://opgkgdansk.slack.com")
+            _slackOpgkWebBrowser = new ChromiumWebBrowser("https://opgkgdansk.slack.com")
             {
+                Name = "SlackOPGK",
                 Dock = DockStyle.Fill,
                 DownloadHandler = new DownloadHandler(),
                 RequestHandler = new RequestHandler()
             };
-            _browserSlackOpgk.LoadingStateChanged += BrowserSlackOpgk_LoadingStateChanged;
-            _browserSlackOpgk.TitleChanged += OnBrowserSlackOpgkTitleChanged;
-        }
 
-        private void BrowserMessenger_LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
-        {
+            _slackOpgkWebBrowser.TitleChanged += OnSlackOpgkWebBrowserTitleChanged;
+            _slackOpgkWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
 
-            if (e.IsLoading == false)
+            // --------------------------------------------------------------------------------------------------------------------------------------
+
+            _slackGisnetWebBrowser = new ChromiumWebBrowser("https://gisnetgda.slack.com")
             {
-                _browserMessengerInitialized = true;
+                Name = "SlackGISNET",
+                Dock = DockStyle.Fill,
+                DownloadHandler = new DownloadHandler(),
+                RequestHandler = new RequestHandler()
+            };
 
-                if (_browserGgInitialized == false)
-                {
-                    tabControl.InvokeOnUiThreadIfRequired(() => tabControl.SelectTab("tabPageGG"));
-                }
-            }
-        }
+            _slackGisnetWebBrowser.TitleChanged += OnSlackGisnetWebBrowserTitleChanged;
+            _slackGisnetWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
 
-        private void OnBrowserMessengerTitleChanged(object sender, TitleChangedEventArgs args)
-        {
-            if (!args.Title.Equals("Messenger") && _tabMessengerUnread == false && _browserMessengerInitialized && !tabPageMessenger.IsActiveControl())
+            // --------------------------------------------------------------------------------------------------------------------------------------
+
+            _smsWebBrowser = new ChromiumWebBrowser("https://messages.android.com")
             {
-                _tabMessengerUnread = true;
+                Name = "SMS",
+                Dock = DockStyle.Fill,
+                DownloadHandler = new DownloadHandler(),
+                RequestHandler = new RequestHandler()
+            };
 
-                tabPageMessenger.InvokeOnUiThreadIfRequired(() => tabPageMessenger.Text = "Messenger (+)");
-
-                this.InvokeOnUiThreadIfRequired(() => FlashWindow(Handle, true));
-
-            }
+            _smsWebBrowser.TitleChanged += OnSmsWebBrowserTitleChanged;
+            _smsWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
         }
 
-        private void BrowserGg_LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
-        {
-            if (e.IsLoading == false)
-            {
-                _browserGgInitialized = true;
-
-                if (_browserWhatsappInitialized == false)
-                {
-                    tabControl.InvokeOnUiThreadIfRequired(() => tabControl.SelectTab("tabPageWhatsApp"));
-                }
-            }
-        }
-
-        private void OnBrowserGgTitleChanged(object sender, TitleChangedEventArgs args)
-        {
-            if (!args.Title.Equals("GG") && _tabGgUnread == false && _browserGgInitialized && !this.IsActiveControl())
-            {
-                _tabGgUnread = true;
-
-                tabPageGG.InvokeOnUiThreadIfRequired(() => tabPageGG.Text = "GG (+)");
-
-                this.InvokeOnUiThreadIfRequired(() => FlashWindow(Handle, true));
-            }
-        }
-
-        private void BrowserWhatsapp_LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
+        private void OnBrowserLoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
         {
             if (e.IsLoading == false)
             {
-                _browserWhatsappInitialized = true;
-
-                if (_browserSkypeInitialized == false)
+                switch (((ChromiumWebBrowser)sender).Name)
                 {
-                    tabControl.InvokeOnUiThreadIfRequired(() => tabControl.SelectTab("tabPageSkype"));
-                }
+                    case "Messenger":
+                        _messengerWebBrowserInitialized = true;
+                        break;
+
+                    case "GG":
+                        _ggWebBrowserInitialized = true;
+                        break;
+
+                    case "WhatsApp":
+                        _whatsAppWebBrowserInitialized = true;
+                        break;
+                    
+                    case "Skype":
+                        _skypeWebBrowserInitialized = true;
+                        break;
+                    
+                    case "SlackOPGK":
+                        _slackOpgkWebBrowserInitialized = true;
+                        break;
+                    
+                    case "SlackGISNET":
+                        _slackGisnetWebBrowserInitialized = true;
+                        break;
+
+                    case "SMS":
+                        _smsWebBrowserInitialized = true;
+                        break;                }
             }
         }
 
-        private void OnBrowserWhatsappTitleChanged(object sender, TitleChangedEventArgs args)
+        private void OnMessengerWebBrowserTitleChanged(object sender, TitleChangedEventArgs args)
         {
-            if (!args.Title.Equals("WhatsApp") && _tabWhatsappUnread == false && _browserWhatsappInitialized && !this.IsActiveControl())
+            string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
+            IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
+
+            if (!args.Title.Equals("Messenger") && _messengerTabUnread == false && _messengerWebBrowserInitialized)
             {
-                _tabWhatsappUnread = true;
-
-                tabPageWhatsApp.InvokeOnUiThreadIfRequired(() => tabPageWhatsApp.Text = "WhatsApp (+)");
-
-                this.InvokeOnUiThreadIfRequired(() => FlashWindow(Handle, true));
-            }
-        }
-
-        private void BrowserSkype_LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
-        {
-            if (e.IsLoading == false)
-            {
-                _browserSkypeInitialized = true;
-
-                if (_browserSlackOpgkInitialized == false)
+                if (IsActive(activeHandle) && activeTabName == "tabPageMessenger")
                 {
-                    tabControl.InvokeOnUiThreadIfRequired(() => tabControl.SelectTab("tabPageSlackOpgk"));
+                    _messengerTabUnread = false;
+
+                    tabPageMessenger.InvokeOnUiThreadIfRequired(() => tabPageMessenger.Text = "Messenger");
                 }
-            }
-        }
-
-        private void OnBrowserSkypeTitleChanged(object sender, TitleChangedEventArgs args)
-        {
-            if (!args.Title.Equals("Skype") && _tabSkypeUnread == false && _browserSkypeInitialized && !this.IsActiveControl())
-            {
-                _tabSkypeUnread = true;
-
-                tabPageSkype.InvokeOnUiThreadIfRequired(() => tabPageSkype.Text = "Skype (+)");
-
-                this.InvokeOnUiThreadIfRequired(() => FlashWindow(Handle, true));
-            }
-        }
-
-        private void BrowserSlackOpgk_LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
-        {
-            if (e.IsLoading == false)
-            {
-                _browserSlackOpgkInitialized = true;
-
-                if (_browserMessengerInitialized == false)
+                else
                 {
-                    tabControl.InvokeOnUiThreadIfRequired(() => tabControl.SelectTab("tabPageMesseneger"));
+                    _messengerTabUnread = true;
+
+                    tabPageMessenger.InvokeOnUiThreadIfRequired(() => tabPageMessenger.Text = "Messenger (+)");
                 }
+                
+                this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
             }
         }
 
-        private void OnBrowserSlackOpgkTitleChanged(object sender, TitleChangedEventArgs args)
+        private void OnGgWebBrowserTitleChanged(object sender, TitleChangedEventArgs args)
         {
-            if (args.Title.StartsWith("!") && _tabSlackOpgkUnread == false && _browserSlackOpgkInitialized && !this.IsActiveControl())
+            string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
+            IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
+
+            if (!args.Title.Equals("GG") && _ggTabUnread == false && _ggWebBrowserInitialized)
             {
-                _tabSlackOpgkUnread = true;
+                if (IsActive(activeHandle) && activeTabName == "tabPageGG")
+                {
+                    _ggTabUnread = false;
 
-                tabPageSlackOpgk.InvokeOnUiThreadIfRequired(() => tabPageSlackOpgk.Text = "Slack OPGK (+)");
+                    tabPageGG.InvokeOnUiThreadIfRequired(() => tabPageGG.Text = "GG");
+                }
+                else
+                {
+                    _ggTabUnread = true;
 
-                this.InvokeOnUiThreadIfRequired(() => FlashWindow(Handle, true));
+                    tabPageGG.InvokeOnUiThreadIfRequired(() => tabPageGG.Text = "GG (+)");
+                }
+                 
+                this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
+            }
+        }
+
+        private void OnWhatsAppWebBrowserTitleChanged(object sender, TitleChangedEventArgs args)
+        {
+            string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
+            IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
+
+            if (!args.Title.Equals("WhatsApp") && _whatsAppTabUnread == false && _whatsAppWebBrowserInitialized)
+            {
+                if (IsActive(activeHandle) && activeTabName == "tabPageWhatsApp")
+                {
+                    _whatsAppTabUnread = false;
+
+                    tabPageWhatsApp.InvokeOnUiThreadIfRequired(() => tabPageWhatsApp.Text = "WhatsApp");
+                }
+                else
+                {
+                    _whatsAppTabUnread = true;
+
+                    tabPageWhatsApp.InvokeOnUiThreadIfRequired(() => tabPageWhatsApp.Text = "WhatsApp (+)");
+                }
+
+                this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
+            }
+        }
+
+        private void OnSkypeWebBrowserTitleChanged(object sender, TitleChangedEventArgs args)
+        {
+            if (!args.Title.Equals("Skype") && _skypeTabUnread == false && _skypeWebBrowserInitialized)
+            {
+                string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
+                IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
+
+                if (IsActive(activeHandle) && activeTabName == "tabPageSkype")
+                {
+                    _skypeTabUnread = false;
+
+                    tabPageSkype.InvokeOnUiThreadIfRequired(() => tabPageSkype.Text = "Skype");
+                }
+                else    
+                {
+                    _skypeTabUnread = true;
+
+                    tabPageSkype.InvokeOnUiThreadIfRequired(() => tabPageSkype.Text = "Skype (+)");
+                }
+
+                this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
+            }
+        }
+
+        private void OnSlackOpgkWebBrowserTitleChanged(object sender, TitleChangedEventArgs args)
+        {
+            string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
+            IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
+
+            if (args.Title.StartsWith("!") && _slackTabOpgkUnread == false && _slackOpgkWebBrowserInitialized)
+            {
+                if (IsActive(activeHandle) && activeTabName == "tabPageSlackOPGK")
+                {
+                    _slackTabOpgkUnread = false;
+
+                    tabPageSlackOPGK.InvokeOnUiThreadIfRequired(() => tabPageSlackOPGK.Text = "Slack OPGK");
+                }
+                else
+                {
+                    _slackTabOpgkUnread = true;
+
+                    tabPageSlackOPGK.InvokeOnUiThreadIfRequired(() => tabPageSlackOPGK.Text = "Slack OPGK (+)");
+                }
+               
+                this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
+            }
+        }
+
+        private void OnSlackGisnetWebBrowserTitleChanged(object sender, TitleChangedEventArgs args)
+        {
+            string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
+            IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
+
+            if (args.Title.StartsWith("!") && _slackTabGisnetUnread == false && _slackGisnetWebBrowserInitialized)
+            {
+                if (IsActive(activeHandle) && activeTabName == "tabPageSlackGISNET")
+                {
+                    _slackTabGisnetUnread = false;
+
+                    tabPageSlackGISNET.InvokeOnUiThreadIfRequired(() => tabPageSlackGISNET.Text = "Slack GISNET");
+                }
+                else
+                {
+                    _slackTabGisnetUnread = true;
+
+                    tabPageSlackGISNET.InvokeOnUiThreadIfRequired(() => tabPageSlackGISNET.Text = "Slack GISNET (+)");
+                }
+               
+                this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
+            }
+        }
+
+        private void OnSmsWebBrowserTitleChanged(object sender, TitleChangedEventArgs args)
+        {
+            string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
+            IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
+
+            if (args.Title.Contains("(") && _smsTabUnread == false && _smsWebBrowserInitialized)
+            {
+                if (IsActive(activeHandle) && activeTabName == "tabPageSMS")
+                {
+                    _smsTabUnread = false;
+
+                    tabPageSMS.InvokeOnUiThreadIfRequired(() => tabPageSMS.Text = "SMS");
+                }
+                else
+                {
+                    _smsTabUnread = true;
+
+                    tabPageSMS.InvokeOnUiThreadIfRequired(() => tabPageSMS.Text = "SMS (+)");
+                }
+               
+                this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
             }
         }
 
         private void FormMain_Load(object sender, EventArgs e)
         {
-            tabPageMessenger.Controls.Add(_browserMessenger);
+            tabPageMessenger.Controls.Add(_messengerWebBrowser);
+            tabControl.SelectTab("tabPageMessenger");
+
+            tabPageGG.Controls.Add(_ggWebBrowser);
+            tabControl.SelectTab("tabPageGG");
             
-            tabPageGG.Controls.Add(_browserGg);
+            tabPageWhatsApp.Controls.Add(_whatsAppWebBrowser);
+            tabControl.SelectTab("tabPageWhatsApp");
 
-            tabPageWhatsApp.Controls.Add(_browserWhatsapp);
+            tabPageSkype.Controls.Add(_skypeWebBrowser);
+            tabControl.SelectTab("tabPageSkype");
 
-            tabPageSkype.Controls.Add(_browserSkype);
+            tabPageSlackOPGK.Controls.Add(_slackOpgkWebBrowser);
+            tabControl.SelectTab("tabPageSlackOPGK");
 
-            tabPageSlackOpgk.Controls.Add(_browserSlackOpgk);
+            tabPageSlackGISNET.Controls.Add(_slackGisnetWebBrowser);
+            tabControl.SelectTab("tabPageSlackGISNET");
+
+            tabPageSMS.Controls.Add(_smsWebBrowser);
+            tabControl.SelectTab("tabPageSMS");
+
+            tabControl.SelectTab(Properties.Settings.Default.LastTab);
         }
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             Cef.Shutdown();
-        }
 
-        private void TabControl_Click(object sender, EventArgs e)
+            string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
+
+            Properties.Settings.Default.LastTab = activeTabName;
+            Properties.Settings.Default.Save();
+        }
+        
+        private void ResetStatus(object sender, EventArgs e)
         {
             switch (tabControl.SelectedTab.Name)
             {
                 case "tabPageMessenger":
                     tabPageMessenger.Text = "Messenger";
-                    _tabMessengerUnread = false;
+                    _messengerTabUnread = false;
                     break;
 
                 case "tabPageGG":
                     tabPageGG.Text = "GG";
-                    _tabGgUnread = false;
+                    _ggTabUnread = false;
                     break;
 
                 case "tabPageWhatsApp":
                     tabPageWhatsApp.Text = "WhatsApp";
-                    _tabWhatsappUnread = false;
+                    _whatsAppTabUnread = false;
                     break;
 
                 case "tabPageSkype":
                     tabPageSkype.Text = "Skype";
-                    _tabSkypeUnread = false;
+                    _skypeTabUnread = false;
                     break;
 
-                case "tabPageSlackOpgk":
-                    tabPageSlackOpgk.Text = "Slack OPGK";
-                    _tabSlackOpgkUnread = false;
+                case "tabPageSlackOPGK":
+                    tabPageSlackOPGK.Text = "Slack OPGK";
+                    _slackTabOpgkUnread = false;
                     break;
-            }
-        }
 
-        private void FormMain_Activated(object sender, EventArgs e)
-        {
-            if (_browserMessengerInitialized && _browserGgInitialized && _browserWhatsappInitialized && _browserSkypeInitialized)
-            {
-                switch (tabControl.SelectedTab.Name)
-                {
-                    case "tabPageMessenger":
-                        tabPageMessenger.Text = "Messenger";
-                        _tabMessengerUnread = false;
-                        break;
+                case "tabPageSlackGISNET":
+                    tabPageSlackGISNET.Text = "Slack GISNET";
+                    _slackTabGisnetUnread = false;
+                    break;
 
-                    case "tabPageGG":
-                        tabPageGG.Text = "GG";
-                        _tabGgUnread = false;
-                        break;
-
-                    case "tabPageWhatsApp":
-                        tabPageWhatsApp.Text = "WhatsApp";
-                        _tabWhatsappUnread = false;
-                        break;
-
-                    case "tabPageSkype":
-                        tabPageSkype.Text = "Skype";
-                        _tabSkypeUnread = false;
-                        break;
-
-                    case "tabPageSlackOpgk":
-                        tabPageSlackOpgk.Text = "Slack OPGK";
-                        _tabSlackOpgkUnread = false;
-                        break;
-                }
+                case "tabPageSMS":
+                    tabPageSMS.Text = "SMS";
+                    _smsTabUnread = false;
+                    break;
             }
         }
     }
