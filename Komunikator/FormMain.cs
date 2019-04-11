@@ -161,7 +161,7 @@ namespace Komunikator
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
-            _smsWebBrowser = new ChromiumWebBrowser("https://messages.android.com")
+            _smsWebBrowser = new ChromiumWebBrowser("https://messages.google.com/web")
             {
                 Name = "SMS",
                 Dock = DockStyle.Fill,
@@ -310,7 +310,7 @@ namespace Komunikator
             string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
             IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
 
-            if (args.Title.StartsWith("!") && _slackTabOpgkUnread == false && _slackOpgkWebBrowserInitialized)
+            if ((args.Title.StartsWith("!") || args.Title.StartsWith("*")) && _slackTabOpgkUnread == false && _slackOpgkWebBrowserInitialized)
             {
                 if (IsActive(activeHandle) && activeTabName == "tabPageSlackOPGK")
                 {
@@ -334,7 +334,7 @@ namespace Komunikator
             string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
             IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
 
-            if (args.Title.StartsWith("!") && _slackTabGisnetUnread == false && _slackGisnetWebBrowserInitialized)
+            if ((args.Title.StartsWith("!") || args.Title.StartsWith("*")) && _slackTabGisnetUnread == false && _slackGisnetWebBrowserInitialized)
             {
                 if (IsActive(activeHandle) && activeTabName == "tabPageSlackGISNET")
                 {
