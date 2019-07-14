@@ -34,6 +34,10 @@ namespace Komunikator
         private bool _whatsAppWebBrowserInitialized;
         private bool _whatsAppTabUnread;
 
+        ChromiumWebBrowser _telegramWebBrowser;
+        private bool _telegramWebBrowserInitialized;
+        private bool _telegramTabUnread;
+
         ChromiumWebBrowser _skypeWebBrowser;
         private bool _skypeWebBrowserInitialized;
         private bool _skypeTabUnread;
@@ -122,6 +126,19 @@ namespace Komunikator
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
+            _telegramWebBrowser = new ChromiumWebBrowser("https://web.telegram.org")
+            {
+                Name = "Telegram",
+                Dock = DockStyle.Fill,
+                DownloadHandler = new DownloadHandler(),
+                RequestHandler = new RequestHandler()
+            };
+
+            _telegramWebBrowser.TitleChanged += OnTelegramWebBrowserTitleChanged;
+            _telegramWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
+
+            // --------------------------------------------------------------------------------------------------------------------------------------
+
             _skypeWebBrowser = new ChromiumWebBrowser("https://preview.web.skype.com")
             {
                 Name = "Skype",
@@ -190,7 +207,11 @@ namespace Komunikator
                     case "WhatsApp":
                         _whatsAppWebBrowserInitialized = true;
                         break;
-                    
+
+                    case "Telegram":
+                        _telegramWebBrowserInitialized = true;
+                        break;
+
                     case "Skype":
                         _skypeWebBrowserInitialized = true;
                         break;
@@ -275,6 +296,30 @@ namespace Komunikator
                     _whatsAppTabUnread = true;
 
                     tabPageWhatsApp.InvokeOnUiThreadIfRequired(() => tabPageWhatsApp.Text = "WhatsApp (+)");
+                }
+
+                this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
+            }
+        }
+
+        private void OnTelegramWebBrowserTitleChanged(object sender, TitleChangedEventArgs args)
+        {
+            string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
+            IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
+
+            if (!args.Title.Equals("Telegram Web") && _telegramTabUnread == false && _telegramWebBrowserInitialized)
+            {
+                if (IsActive(activeHandle) && activeTabName == "tabPageTelegram")
+                {
+                    _telegramTabUnread = false;
+
+                    tabPageTelegram.InvokeOnUiThreadIfRequired(() => tabPageTelegram.Text = "Telegram");
+                }
+                else
+                {
+                    _telegramTabUnread = true;
+
+                    tabPageTelegram.InvokeOnUiThreadIfRequired(() => tabPageTelegram.Text = "Telegram (+)");
                 }
 
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -388,6 +433,9 @@ namespace Komunikator
             tabPageWhatsApp.Controls.Add(_whatsAppWebBrowser);
             tabControl.SelectTab("tabPageWhatsApp");
 
+            tabPageTelegram.Controls.Add(_telegramWebBrowser);
+            tabControl.SelectTab("tabPageTelegram");
+
             tabPageSkype.Controls.Add(_skypeWebBrowser);
             tabControl.SelectTab("tabPageSkype");
 
@@ -430,6 +478,11 @@ namespace Komunikator
                 case "tabPageWhatsApp":
                     tabPageWhatsApp.Text = "WhatsApp";
                     _whatsAppTabUnread = false;
+                    break;
+
+                case "tabPageTelegram":
+                    tabPageTelegram.Text = "Telegram";
+                    _telegramTabUnread = false;
                     break;
 
                 case "tabPageSkype":
