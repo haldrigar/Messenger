@@ -16,6 +16,22 @@ namespace Komunikator
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
 
+        // Define the Win32 API methods we are going to use
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+
+        [DllImport("user32.dll")]
+        private static extern bool InsertMenu(IntPtr hMenu, Int32 wPosition, Int32 wFlags, Int32 wIDNewItem, string lpNewItem);
+
+        /// Define our Constants we will use
+        private const Int32 WM_SYSCOMMAND = 0x112;
+        private const Int32 MF_SEPARATOR = 0x800;
+        private const Int32 MF_BYPOSITION = 0x400;
+
+        // The constants we'll use to identify our custom system menu items
+        private const Int32 _RefreshSysMenuID = 1000;
+        private const Int32 _AboutSysMenuID = 1001;
+
         private bool IsActive(IntPtr handle)
         {
             IntPtr activeHandle = GetForegroundWindow();
@@ -50,10 +66,6 @@ namespace Komunikator
         private bool _slackGisnetWebBrowserInitialized;
         private bool _slackTabGisnetUnread;
 
-        ChromiumWebBrowser _smsWebBrowser;
-        private bool _smsWebBrowserInitialized;
-        private bool _smsTabUnread;
-
         public FormMain()
         {
             InitializeChromium();
@@ -79,9 +91,7 @@ namespace Komunikator
             //settings.CefCommandLineArgs.Add("disable-gpu-vsync", "1");
             //settings.CefCommandLineArgs.Add("disable-direct-write", "1");
 
-
-            //Cef.EnableHighDPISupport();
-
+            Cef.EnableHighDPISupport();
 
             Cef.Initialize(settings);
 
@@ -97,6 +107,7 @@ namespace Komunikator
 
             _messengerWebBrowser.TitleChanged += OnMessengerWebBrowserTitleChanged;
             _messengerWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
+            _messengerWebBrowser.FrameLoadEnd += OnWebBrowserFrameLoadEnd;
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -110,6 +121,7 @@ namespace Komunikator
 
             _ggWebBrowser.TitleChanged += OnGgWebBrowserTitleChanged;
             _ggWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
+            _ggWebBrowser.FrameLoadEnd += OnWebBrowserFrameLoadEnd;
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -123,6 +135,7 @@ namespace Komunikator
 
             _whatsAppWebBrowser.TitleChanged += OnWhatsAppWebBrowserTitleChanged;
             _whatsAppWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
+            _whatsAppWebBrowser.FrameLoadEnd += OnWebBrowserFrameLoadEnd;
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -136,10 +149,11 @@ namespace Komunikator
 
             _telegramWebBrowser.TitleChanged += OnTelegramWebBrowserTitleChanged;
             _telegramWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
+            _telegramWebBrowser.FrameLoadEnd += OnWebBrowserFrameLoadEnd;
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
-            _skypeWebBrowser = new ChromiumWebBrowser("https://preview.web.skype.com")
+            _skypeWebBrowser = new ChromiumWebBrowser("https://web.skype.com")
             {
                 Name = "Skype",
                 Dock = DockStyle.Fill,
@@ -149,6 +163,7 @@ namespace Komunikator
 
             _skypeWebBrowser.TitleChanged += OnSkypeWebBrowserTitleChanged;
             _skypeWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
+            _skypeWebBrowser.FrameLoadEnd += OnWebBrowserFrameLoadEnd;
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -162,6 +177,7 @@ namespace Komunikator
 
             _slackOpgkWebBrowser.TitleChanged += OnSlackOpgkWebBrowserTitleChanged;
             _slackOpgkWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
+            _slackOpgkWebBrowser.FrameLoadEnd += OnWebBrowserFrameLoadEnd;
 
             // --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -175,19 +191,7 @@ namespace Komunikator
 
             _slackGisnetWebBrowser.TitleChanged += OnSlackGisnetWebBrowserTitleChanged;
             _slackGisnetWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
-
-            // --------------------------------------------------------------------------------------------------------------------------------------
-
-            _smsWebBrowser = new ChromiumWebBrowser("https://messages.google.com/web")
-            {
-                Name = "SMS",
-                Dock = DockStyle.Fill,
-                DownloadHandler = new DownloadHandler(),
-                RequestHandler = new RequestHandler()
-            };
-
-            _smsWebBrowser.TitleChanged += OnSmsWebBrowserTitleChanged;
-            _smsWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
+            _slackGisnetWebBrowser.FrameLoadEnd += OnWebBrowserFrameLoadEnd;
         }
 
         private void OnBrowserLoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
@@ -223,10 +227,15 @@ namespace Komunikator
                     case "SlackGISNET":
                         _slackGisnetWebBrowserInitialized = true;
                         break;
+                }
+            }
+        }
 
-                    case "SMS":
-                        _smsWebBrowserInitialized = true;
-                        break;                }
+        private void OnWebBrowserFrameLoadEnd(object sender, FrameLoadEndEventArgs e)
+        {
+            if (e.Frame.IsMain)
+            {
+                e.Browser.MainFrame.ExecuteJavaScriptAsync("document.body.style.overflow = 'hidden'");
             }
         }
 
@@ -241,13 +250,13 @@ namespace Komunikator
                 {
                     _messengerTabUnread = false;
 
-                    tabPageMessenger.InvokeOnUiThreadIfRequired(() => tabPageMessenger.Text = "Messenger");
+                    tabPageMessenger.InvokeOnUiThreadIfRequired(() => tabPageMessenger.Text = @"Messenger");
                 }
                 else
                 {
                     _messengerTabUnread = true;
 
-                    tabPageMessenger.InvokeOnUiThreadIfRequired(() => tabPageMessenger.Text = "Messenger (+)");
+                    tabPageMessenger.InvokeOnUiThreadIfRequired(() => tabPageMessenger.Text = @"Messenger (+)");
                 }
                 
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -265,13 +274,13 @@ namespace Komunikator
                 {
                     _ggTabUnread = false;
 
-                    tabPageGG.InvokeOnUiThreadIfRequired(() => tabPageGG.Text = "GG");
+                    tabPageGG.InvokeOnUiThreadIfRequired(() => tabPageGG.Text = @"GG");
                 }
                 else
                 {
                     _ggTabUnread = true;
 
-                    tabPageGG.InvokeOnUiThreadIfRequired(() => tabPageGG.Text = "GG (+)");
+                    tabPageGG.InvokeOnUiThreadIfRequired(() => tabPageGG.Text = @"GG (+)");
                 }
                  
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -289,13 +298,13 @@ namespace Komunikator
                 {
                     _whatsAppTabUnread = false;
 
-                    tabPageWhatsApp.InvokeOnUiThreadIfRequired(() => tabPageWhatsApp.Text = "WhatsApp");
+                    tabPageWhatsApp.InvokeOnUiThreadIfRequired(() => tabPageWhatsApp.Text = @"WhatsApp");
                 }
                 else
                 {
                     _whatsAppTabUnread = true;
 
-                    tabPageWhatsApp.InvokeOnUiThreadIfRequired(() => tabPageWhatsApp.Text = "WhatsApp (+)");
+                    tabPageWhatsApp.InvokeOnUiThreadIfRequired(() => tabPageWhatsApp.Text = @"WhatsApp (+)");
                 }
 
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -313,13 +322,13 @@ namespace Komunikator
                 {
                     _telegramTabUnread = false;
 
-                    tabPageTelegram.InvokeOnUiThreadIfRequired(() => tabPageTelegram.Text = "Telegram");
+                    tabPageTelegram.InvokeOnUiThreadIfRequired(() => tabPageTelegram.Text = @"Telegram");
                 }
                 else
                 {
                     _telegramTabUnread = true;
 
-                    tabPageTelegram.InvokeOnUiThreadIfRequired(() => tabPageTelegram.Text = "Telegram (+)");
+                    tabPageTelegram.InvokeOnUiThreadIfRequired(() => tabPageTelegram.Text = @"Telegram (+)");
                 }
 
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -337,13 +346,13 @@ namespace Komunikator
                 {
                     _skypeTabUnread = false;
 
-                    tabPageSkype.InvokeOnUiThreadIfRequired(() => tabPageSkype.Text = "Skype");
+                    tabPageSkype.InvokeOnUiThreadIfRequired(() => tabPageSkype.Text = @"Skype");
                 }
                 else    
                 {
                     _skypeTabUnread = true;
 
-                    tabPageSkype.InvokeOnUiThreadIfRequired(() => tabPageSkype.Text = "Skype (+)");
+                    tabPageSkype.InvokeOnUiThreadIfRequired(() => tabPageSkype.Text = @"Skype (+)");
                 }
 
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -361,13 +370,13 @@ namespace Komunikator
                 {
                     _slackTabOpgkUnread = false;
 
-                    tabPageSlackOPGK.InvokeOnUiThreadIfRequired(() => tabPageSlackOPGK.Text = "Slack OPGK");
+                    tabPageSlackOPGK.InvokeOnUiThreadIfRequired(() => tabPageSlackOPGK.Text = @"Slack OPGK");
                 }
                 else
                 {
                     _slackTabOpgkUnread = true;
 
-                    tabPageSlackOPGK.InvokeOnUiThreadIfRequired(() => tabPageSlackOPGK.Text = "Slack OPGK (+)");
+                    tabPageSlackOPGK.InvokeOnUiThreadIfRequired(() => tabPageSlackOPGK.Text = @"Slack OPGK (+)");
                 }
                
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -385,37 +394,13 @@ namespace Komunikator
                 {
                     _slackTabGisnetUnread = false;
 
-                    tabPageSlackGISNET.InvokeOnUiThreadIfRequired(() => tabPageSlackGISNET.Text = "Slack GISNET");
+                    tabPageSlackGISNET.InvokeOnUiThreadIfRequired(() => tabPageSlackGISNET.Text = @"Slack GISNET");
                 }
                 else
                 {
                     _slackTabGisnetUnread = true;
 
-                    tabPageSlackGISNET.InvokeOnUiThreadIfRequired(() => tabPageSlackGISNET.Text = "Slack GISNET (+)");
-                }
-               
-                this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
-            }
-        }
-
-        private void OnSmsWebBrowserTitleChanged(object sender, TitleChangedEventArgs args)
-        {
-            string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
-            IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
-
-            if (args.Title.Contains("(") && _smsTabUnread == false && _smsWebBrowserInitialized)
-            {
-                if (IsActive(activeHandle) && activeTabName == "tabPageSMS")
-                {
-                    _smsTabUnread = false;
-
-                    tabPageSMS.InvokeOnUiThreadIfRequired(() => tabPageSMS.Text = "SMS");
-                }
-                else
-                {
-                    _smsTabUnread = true;
-
-                    tabPageSMS.InvokeOnUiThreadIfRequired(() => tabPageSMS.Text = "SMS (+)");
+                    tabPageSlackGISNET.InvokeOnUiThreadIfRequired(() => tabPageSlackGISNET.Text = @"Slack GISNET (+)");
                 }
                
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -424,6 +409,14 @@ namespace Komunikator
 
         private void FormMain_Load(object sender, EventArgs e)
         {
+            // Get the Handle for the Forms System Menu
+            IntPtr systemMenuHandle = GetSystemMenu(Handle, false);
+
+            // Create our new System Menu items just before the Close menu item
+            InsertMenu(systemMenuHandle, 5, MF_BYPOSITION | MF_SEPARATOR, 0, string.Empty); // <-- Add a menu seperator
+            InsertMenu(systemMenuHandle, 6, MF_BYPOSITION, _RefreshSysMenuID, "Refresh");
+            InsertMenu(systemMenuHandle, 7, MF_BYPOSITION, _AboutSysMenuID, "About");
+
             tabPageMessenger.Controls.Add(_messengerWebBrowser);
             tabControl.SelectTab("tabPageMessenger");
 
@@ -445,9 +438,6 @@ namespace Komunikator
             tabPageSlackGISNET.Controls.Add(_slackGisnetWebBrowser);
             tabControl.SelectTab("tabPageSlackGISNET");
 
-            tabPageSMS.Controls.Add(_smsWebBrowser);
-            tabControl.SelectTab("tabPageSMS");
-
             tabControl.SelectTab(Properties.Settings.Default.LastTab);
         }
 
@@ -466,45 +456,94 @@ namespace Komunikator
             switch (tabControl.SelectedTab.Name)
             {
                 case "tabPageMessenger":
-                    tabPageMessenger.Text = "Messenger";
+                    tabPageMessenger.Text = @"Messenger";
                     _messengerTabUnread = false;
                     break;
 
                 case "tabPageGG":
-                    tabPageGG.Text = "GG";
+                    tabPageGG.Text = @"GG";
                     _ggTabUnread = false;
                     break;
 
                 case "tabPageWhatsApp":
-                    tabPageWhatsApp.Text = "WhatsApp";
+                    tabPageWhatsApp.Text = @"WhatsApp";
                     _whatsAppTabUnread = false;
                     break;
 
                 case "tabPageTelegram":
-                    tabPageTelegram.Text = "Telegram";
+                    tabPageTelegram.Text = @"Telegram";
                     _telegramTabUnread = false;
                     break;
 
                 case "tabPageSkype":
-                    tabPageSkype.Text = "Skype";
+                    tabPageSkype.Text = @"Skype";
                     _skypeTabUnread = false;
                     break;
 
                 case "tabPageSlackOPGK":
-                    tabPageSlackOPGK.Text = "Slack OPGK";
+                    tabPageSlackOPGK.Text = @"Slack OPGK";
                     _slackTabOpgkUnread = false;
                     break;
 
                 case "tabPageSlackGISNET":
-                    tabPageSlackGISNET.Text = "Slack GISNET";
+                    tabPageSlackGISNET.Text = @"Slack GISNET";
                     _slackTabGisnetUnread = false;
-                    break;
-
-                case "tabPageSMS":
-                    tabPageSMS.Text = "SMS";
-                    _smsTabUnread = false;
                     break;
             }
         }
+
+        protected override void WndProc(ref Message m)
+        {
+            // Check if a System Command has been executed
+            if (m.Msg == WM_SYSCOMMAND)
+            {
+                // Execute the appropriate code for the System Menu item that was clicked
+                switch (m.WParam.ToInt32())
+                {
+                    case _RefreshSysMenuID:
+
+                        _messengerWebBrowser.Reload();
+                        _ggWebBrowser.Reload();
+                        _whatsAppWebBrowser.Reload();
+                        _telegramWebBrowser.Reload();
+                        _skypeWebBrowser.Reload();
+                        _slackOpgkWebBrowser.Reload();
+                        _slackGisnetWebBrowser.Reload();
+
+                        break;
+
+                    case _AboutSysMenuID:
+                        
+                        break;
+                }
+            }
+
+            base.WndProc(ref m);
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            bool bHandled = false;
+            // switch case is the easy way, a hash or map would be better, 
+            // but more work to get set up.
+
+            switch (keyData)
+            {
+                case Keys.F5:
+
+                    _messengerWebBrowser.Reload();
+                    _ggWebBrowser.Reload();
+                    _whatsAppWebBrowser.Reload();
+                    _telegramWebBrowser.Reload();
+                    _skypeWebBrowser.Reload();
+                    _slackOpgkWebBrowser.Reload();
+                    _slackGisnetWebBrowser.Reload();
+
+                    bHandled = true;
+                    break;
+            }
+            return bHandled;
+        }
+
     }
 }
