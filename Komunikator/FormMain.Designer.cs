@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabControl = new System.Windows.Forms.TabControl();
             this.tabPageMessenger = new System.Windows.Forms.TabPage();
@@ -37,6 +38,8 @@
             this.tabPageSkype = new System.Windows.Forms.TabPage();
             this.tabPageSlackOPGK = new System.Windows.Forms.TabPage();
             this.tabPageSlackGISNET = new System.Windows.Forms.TabPage();
+            this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
+            this.timer = new System.Windows.Forms.Timer(this.components);
             this.tabControl.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -137,6 +140,18 @@
             this.tabPageSlackGISNET.Text = "Slack GISNET";
             this.tabPageSlackGISNET.UseVisualStyleBackColor = true;
             // 
+            // notifyIcon
+            // 
+            this.notifyIcon.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+            this.notifyIcon.BalloonTipTitle = "Komunikator";
+            this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
+            this.notifyIcon.Visible = true;
+            // 
+            // timer
+            // 
+            this.timer.Interval = 500;
+            this.timer.Tick += new System.EventHandler(this.Timer_Tick);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -165,6 +180,8 @@
         private System.Windows.Forms.TabPage tabPageSlackOPGK;
         private System.Windows.Forms.TabPage tabPageSlackGISNET;
         private System.Windows.Forms.TabPage tabPageTelegram;
+        private System.Windows.Forms.NotifyIcon notifyIcon;
+        private System.Windows.Forms.Timer timer;
     }
 }
 

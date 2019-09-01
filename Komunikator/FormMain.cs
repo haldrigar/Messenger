@@ -21,50 +21,52 @@ namespace Komunikator
         private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
 
         [DllImport("user32.dll")]
-        private static extern bool InsertMenu(IntPtr hMenu, Int32 wPosition, Int32 wFlags, Int32 wIDNewItem, string lpNewItem);
+        private static extern bool InsertMenu(IntPtr hMenu, int wPosition, int wFlags, int wIdNewItem, string lpNewItem);
 
         /// Define our Constants we will use
-        private const Int32 WM_SYSCOMMAND = 0x112;
-        private const Int32 MF_SEPARATOR = 0x800;
-        private const Int32 MF_BYPOSITION = 0x400;
+        private const int WmSyscommand = 0x112;
+        private const int MfSeparator = 0x800;
+        private const int MfByposition = 0x400;
 
         // The constants we'll use to identify our custom system menu items
-        private const Int32 _RefreshSysMenuID = 1000;
-        private const Int32 _AboutSysMenuID = 1001;
+        private const int RefreshSysMenuId = 1000;
+        private const int AboutSysMenuId = 1001;
 
-        private bool IsActive(IntPtr handle)
+        private static bool IsActive(IntPtr handle)
         {
             IntPtr activeHandle = GetForegroundWindow();
             return (activeHandle == handle);
         }
 
-        ChromiumWebBrowser _messengerWebBrowser;
+        private ChromiumWebBrowser _messengerWebBrowser;
         private bool _messengerWebBrowserInitialized;
         private bool _messengerTabUnread;
 
-        ChromiumWebBrowser _ggWebBrowser;
+        private ChromiumWebBrowser _ggWebBrowser;
         private bool _ggWebBrowserInitialized;
         private bool _ggTabUnread;
 
-        ChromiumWebBrowser _whatsAppWebBrowser;
+        private ChromiumWebBrowser _whatsAppWebBrowser;
         private bool _whatsAppWebBrowserInitialized;
         private bool _whatsAppTabUnread;
 
-        ChromiumWebBrowser _telegramWebBrowser;
+        private ChromiumWebBrowser _telegramWebBrowser;
         private bool _telegramWebBrowserInitialized;
         private bool _telegramTabUnread;
 
-        ChromiumWebBrowser _skypeWebBrowser;
+        private ChromiumWebBrowser _skypeWebBrowser;
         private bool _skypeWebBrowserInitialized;
         private bool _skypeTabUnread;
 
-        ChromiumWebBrowser _slackOpgkWebBrowser;
+        private ChromiumWebBrowser _slackOpgkWebBrowser;
         private bool _slackOpgkWebBrowserInitialized;
         private bool _slackTabOpgkUnread;
 
-        ChromiumWebBrowser _slackGisnetWebBrowser;
+        private ChromiumWebBrowser _slackGisnetWebBrowser;
         private bool _slackGisnetWebBrowserInitialized;
         private bool _slackTabGisnetUnread;
+
+        private bool _iconBlink;
 
         public FormMain()
         {
@@ -246,17 +248,26 @@ namespace Komunikator
 
             if (!args.Title.Equals("Messenger") && _messengerTabUnread == false && _messengerWebBrowserInitialized)
             {
+                notifyIcon.BalloonTipTitle = @"Messenger";
+                notifyIcon.BalloonTipText = args.Title;
+                notifyIcon.ShowBalloonTip(5000);  
+
                 if (IsActive(activeHandle) && activeTabName == "tabPageMessenger")
                 {
                     _messengerTabUnread = false;
 
                     tabPageMessenger.InvokeOnUiThreadIfRequired(() => tabPageMessenger.Text = @"Messenger");
+
+                    timer.Stop();
+                    notifyIcon.Icon = Resources.chat_480;
                 }
                 else
                 {
                     _messengerTabUnread = true;
 
                     tabPageMessenger.InvokeOnUiThreadIfRequired(() => tabPageMessenger.Text = @"Messenger (+)");
+
+                    timer.Start();    
                 }
                 
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -270,17 +281,26 @@ namespace Komunikator
 
             if (!args.Title.Equals("GG") && _ggTabUnread == false && _ggWebBrowserInitialized)
             {
+                notifyIcon.BalloonTipTitle = @"GG";
+                notifyIcon.BalloonTipText = args.Title;
+                notifyIcon.ShowBalloonTip(5000); 
+
                 if (IsActive(activeHandle) && activeTabName == "tabPageGG")
                 {
                     _ggTabUnread = false;
 
                     tabPageGG.InvokeOnUiThreadIfRequired(() => tabPageGG.Text = @"GG");
+
+                    timer.Stop();
+                    notifyIcon.Icon = Resources.chat_480;
                 }
                 else
                 {
                     _ggTabUnread = true;
 
                     tabPageGG.InvokeOnUiThreadIfRequired(() => tabPageGG.Text = @"GG (+)");
+
+                    timer.Start();    
                 }
                  
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -294,17 +314,26 @@ namespace Komunikator
 
             if (!args.Title.Equals("WhatsApp") && _whatsAppTabUnread == false && _whatsAppWebBrowserInitialized)
             {
+                notifyIcon.BalloonTipTitle = @"WhatsApp";
+                notifyIcon.BalloonTipText = args.Title;
+                notifyIcon.ShowBalloonTip(5000); 
+
                 if (IsActive(activeHandle) && activeTabName == "tabPageWhatsApp")
                 {
                     _whatsAppTabUnread = false;
 
                     tabPageWhatsApp.InvokeOnUiThreadIfRequired(() => tabPageWhatsApp.Text = @"WhatsApp");
+
+                    timer.Stop();
+                    notifyIcon.Icon = Resources.chat_480;
                 }
                 else
                 {
                     _whatsAppTabUnread = true;
 
                     tabPageWhatsApp.InvokeOnUiThreadIfRequired(() => tabPageWhatsApp.Text = @"WhatsApp (+)");
+
+                    timer.Start();    
                 }
 
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -318,17 +347,26 @@ namespace Komunikator
 
             if (!args.Title.Equals("Telegram Web") && _telegramTabUnread == false && _telegramWebBrowserInitialized)
             {
+                notifyIcon.BalloonTipTitle = @"Telegram";
+                notifyIcon.BalloonTipText = args.Title;
+                notifyIcon.ShowBalloonTip(5000); 
+
                 if (IsActive(activeHandle) && activeTabName == "tabPageTelegram")
                 {
                     _telegramTabUnread = false;
 
                     tabPageTelegram.InvokeOnUiThreadIfRequired(() => tabPageTelegram.Text = @"Telegram");
+
+                    timer.Stop();
+                    notifyIcon.Icon = Resources.chat_480;
                 }
                 else
                 {
                     _telegramTabUnread = true;
 
                     tabPageTelegram.InvokeOnUiThreadIfRequired(() => tabPageTelegram.Text = @"Telegram (+)");
+
+                    timer.Start();    
                 }
 
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -339,6 +377,10 @@ namespace Komunikator
         {
             if (!args.Title.Equals("Skype") && _skypeTabUnread == false && _skypeWebBrowserInitialized)
             {
+                notifyIcon.BalloonTipTitle = @"Skype";
+                notifyIcon.BalloonTipText = args.Title;
+                notifyIcon.ShowBalloonTip(5000); 
+
                 string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
                 IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
 
@@ -347,12 +389,17 @@ namespace Komunikator
                     _skypeTabUnread = false;
 
                     tabPageSkype.InvokeOnUiThreadIfRequired(() => tabPageSkype.Text = @"Skype");
+
+                    timer.Stop();
+                    notifyIcon.Icon = Resources.chat_480;
                 }
                 else    
                 {
                     _skypeTabUnread = true;
 
                     tabPageSkype.InvokeOnUiThreadIfRequired(() => tabPageSkype.Text = @"Skype (+)");
+
+                    timer.Start();    
                 }
 
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -364,19 +411,28 @@ namespace Komunikator
             string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
             IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
 
-            if ((args.Title.StartsWith("!") || args.Title.StartsWith("*")) && _slackTabOpgkUnread == false && _slackOpgkWebBrowserInitialized)
+            if ((args.Title.Contains("!") || args.Title.Contains("*")) && _slackTabOpgkUnread == false && _slackOpgkWebBrowserInitialized)
             {
+                notifyIcon.BalloonTipTitle = @"SlackOpgk";
+                notifyIcon.BalloonTipText = args.Title;
+                notifyIcon.ShowBalloonTip(5000); 
+
                 if (IsActive(activeHandle) && activeTabName == "tabPageSlackOPGK")
                 {
                     _slackTabOpgkUnread = false;
 
                     tabPageSlackOPGK.InvokeOnUiThreadIfRequired(() => tabPageSlackOPGK.Text = @"Slack OPGK");
+
+                    timer.Stop();
+                    notifyIcon.Icon = Resources.chat_480;
                 }
                 else
                 {
                     _slackTabOpgkUnread = true;
 
                     tabPageSlackOPGK.InvokeOnUiThreadIfRequired(() => tabPageSlackOPGK.Text = @"Slack OPGK (+)");
+
+                    timer.Start();    
                 }
                
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -388,19 +444,28 @@ namespace Komunikator
             string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
             IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
 
-            if ((args.Title.StartsWith("!") || args.Title.StartsWith("*")) && _slackTabGisnetUnread == false && _slackGisnetWebBrowserInitialized)
+            if ((args.Title.Contains("!") || args.Title.Contains("*")) && _slackTabGisnetUnread == false && _slackGisnetWebBrowserInitialized)
             {
+                notifyIcon.BalloonTipTitle = @"SlackGisne";
+                notifyIcon.BalloonTipText = args.Title;
+                notifyIcon.ShowBalloonTip(5000); 
+
                 if (IsActive(activeHandle) && activeTabName == "tabPageSlackGISNET")
                 {
                     _slackTabGisnetUnread = false;
 
                     tabPageSlackGISNET.InvokeOnUiThreadIfRequired(() => tabPageSlackGISNET.Text = @"Slack GISNET");
+
+                    timer.Stop();
+                    notifyIcon.Icon = Resources.chat_480;
                 }
                 else
                 {
                     _slackTabGisnetUnread = true;
 
                     tabPageSlackGISNET.InvokeOnUiThreadIfRequired(() => tabPageSlackGISNET.Text = @"Slack GISNET (+)");
+
+                    timer.Start();    
                 }
                
                 this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
@@ -413,9 +478,9 @@ namespace Komunikator
             IntPtr systemMenuHandle = GetSystemMenu(Handle, false);
 
             // Create our new System Menu items just before the Close menu item
-            InsertMenu(systemMenuHandle, 5, MF_BYPOSITION | MF_SEPARATOR, 0, string.Empty); // <-- Add a menu seperator
-            InsertMenu(systemMenuHandle, 6, MF_BYPOSITION, _RefreshSysMenuID, "Refresh");
-            InsertMenu(systemMenuHandle, 7, MF_BYPOSITION, _AboutSysMenuID, "About");
+            InsertMenu(systemMenuHandle, 5, MfByposition | MfSeparator, 0, string.Empty); // <-- Add a menu seperator
+            InsertMenu(systemMenuHandle, 6, MfByposition, RefreshSysMenuId, "Refresh");
+            InsertMenu(systemMenuHandle, 7, MfByposition, AboutSysMenuId, "About");
 
             tabPageMessenger.Controls.Add(_messengerWebBrowser);
             tabControl.SelectTab("tabPageMessenger");
@@ -453,6 +518,9 @@ namespace Komunikator
         
         private void ResetStatus(object sender, EventArgs e)
         {
+            timer.Stop();
+            notifyIcon.Icon = Resources.chat_480;
+
             switch (tabControl.SelectedTab.Name)
             {
                 case "tabPageMessenger":
@@ -495,12 +563,12 @@ namespace Komunikator
         protected override void WndProc(ref Message m)
         {
             // Check if a System Command has been executed
-            if (m.Msg == WM_SYSCOMMAND)
+            if (m.Msg == WmSyscommand)
             {
                 // Execute the appropriate code for the System Menu item that was clicked
                 switch (m.WParam.ToInt32())
                 {
-                    case _RefreshSysMenuID:
+                    case RefreshSysMenuId:
 
                         _messengerWebBrowser.Reload();
                         _ggWebBrowser.Reload();
@@ -512,7 +580,7 @@ namespace Komunikator
 
                         break;
 
-                    case _AboutSysMenuID:
+                    case AboutSysMenuId:
                         
                         break;
                 }
@@ -545,5 +613,18 @@ namespace Komunikator
             return bHandled;
         }
 
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            if (_iconBlink)
+            {
+                notifyIcon.Icon = Resources.chat_490;
+                _iconBlink = false;
+            }
+            else
+            {
+                notifyIcon.Icon = Resources.chat_480;
+                _iconBlink = true;
+            }
+        }
     }
 }

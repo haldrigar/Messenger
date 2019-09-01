@@ -121,4 +121,7 @@
   <data name="chat_480" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\chat-480.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="chat_490" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\chat-490.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>
