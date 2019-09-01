@@ -40,6 +40,7 @@
             this.tabPageSlackGISNET = new System.Windows.Forms.TabPage();
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.timer = new System.Windows.Forms.Timer(this.components);
+            this.tabPageSMS = new System.Windows.Forms.TabPage();
             this.tabControl.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -53,6 +54,7 @@
             this.tabControl.Controls.Add(this.tabPageSkype);
             this.tabControl.Controls.Add(this.tabPageSlackOPGK);
             this.tabControl.Controls.Add(this.tabPageSlackGISNET);
+            this.tabControl.Controls.Add(this.tabPageSMS);
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl.ItemSize = new System.Drawing.Size(100, 25);
             this.tabControl.Location = new System.Drawing.Point(0, 0);
@@ -152,6 +154,16 @@
             this.timer.Interval = 500;
             this.timer.Tick += new System.EventHandler(this.Timer_Tick);
             // 
+            // tabPageSMS
+            // 
+            this.tabPageSMS.Location = new System.Drawing.Point(4, 4);
+            this.tabPageSMS.Margin = new System.Windows.Forms.Padding(0);
+            this.tabPageSMS.Name = "tabPageSMS";
+            this.tabPageSMS.Size = new System.Drawing.Size(984, 686);
+            this.tabPageSMS.TabIndex = 8;
+            this.tabPageSMS.Text = "SMS";
+            this.tabPageSMS.UseVisualStyleBackColor = true;
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -182,6 +194,7 @@
         private System.Windows.Forms.TabPage tabPageTelegram;
         private System.Windows.Forms.NotifyIcon notifyIcon;
         private System.Windows.Forms.Timer timer;
+        private System.Windows.Forms.TabPage tabPageSMS;
     }
 }
 

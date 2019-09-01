@@ -66,6 +66,10 @@ namespace Komunikator
         private bool _slackGisnetWebBrowserInitialized;
         private bool _slackTabGisnetUnread;
 
+        private ChromiumWebBrowser _smsWebBrowser;
+        private bool _smsWebBrowserInitialized;
+        private bool _smsTabUnread;
+
         private bool _iconBlink;
 
         public FormMain()
@@ -194,6 +198,22 @@ namespace Komunikator
             _slackGisnetWebBrowser.TitleChanged += OnSlackGisnetWebBrowserTitleChanged;
             _slackGisnetWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
             _slackGisnetWebBrowser.FrameLoadEnd += OnWebBrowserFrameLoadEnd;
+
+            // --------------------------------------------------------------------------------------------------------------------------------------
+
+            _smsWebBrowser = new ChromiumWebBrowser("https://messages.google.com/web")
+            {
+                Name = "SMS",
+                Dock = DockStyle.Fill,
+                DownloadHandler = new DownloadHandler(),
+                RequestHandler = new RequestHandler()
+            };
+
+            _smsWebBrowser.TitleChanged += OnSmsWebBrowserTitleChanged;
+            _smsWebBrowser.LoadingStateChanged += OnBrowserLoadingStateChanged;
+            _smsWebBrowser.FrameLoadEnd += OnWebBrowserFrameLoadEnd;
+
+            // --------------------------------------------------------------------------------------------------------------------------------------
         }
 
         private void OnBrowserLoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
@@ -228,6 +248,10 @@ namespace Komunikator
                     
                     case "SlackGISNET":
                         _slackGisnetWebBrowserInitialized = true;
+                        break;
+
+                    case "SMS":
+                        _smsWebBrowserInitialized = true;
                         break;
                 }
             }
@@ -472,6 +496,39 @@ namespace Komunikator
             }
         }
 
+        private void OnSmsWebBrowserTitleChanged(object sender, TitleChangedEventArgs args)
+        {
+            string activeTabName = (string)Invoke(new Func<string>(() => tabControl.SelectedTab.Name));
+            IntPtr activeHandle = (IntPtr)Invoke(new Func<IntPtr>(() => Handle));
+
+            if (!args.Title.Equals("Wiadomości w przeglądarce") && !args.Title.Equals("Messages for web") && _smsTabUnread == false && _smsWebBrowserInitialized)
+            {
+                notifyIcon.BalloonTipTitle = @"SMS";
+                notifyIcon.BalloonTipText = args.Title;
+                notifyIcon.ShowBalloonTip(5000); 
+
+                if (IsActive(activeHandle) && activeTabName == "tabPageSMS")
+                {
+                    _smsTabUnread = false;
+
+                    tabPageSMS.InvokeOnUiThreadIfRequired(() => tabPageSMS.Text = @"SMS");
+
+                    timer.Stop();
+                    notifyIcon.Icon = Resources.chat_480;
+                }
+                else
+                {
+                    _smsTabUnread = true;
+
+                    tabPageSMS.InvokeOnUiThreadIfRequired(() => tabPageSMS.Text = @"SMS (+)");
+
+                    timer.Start();    
+                }
+                 
+                this.InvokeOnUiThreadIfRequired(() => FlashWindow(activeHandle, true));
+            }
+        }
+
         private void FormMain_Load(object sender, EventArgs e)
         {
             // Get the Handle for the Forms System Menu
@@ -502,6 +559,9 @@ namespace Komunikator
 
             tabPageSlackGISNET.Controls.Add(_slackGisnetWebBrowser);
             tabControl.SelectTab("tabPageSlackGISNET");
+
+            tabPageSMS.Controls.Add(_smsWebBrowser);
+            tabControl.SelectTab("tabPageSMS");
 
             tabControl.SelectTab(Properties.Settings.Default.LastTab);
         }
@@ -557,6 +617,11 @@ namespace Komunikator
                     tabPageSlackGISNET.Text = @"Slack GISNET";
                     _slackTabGisnetUnread = false;
                     break;
+
+                case "tabPageSMS":
+                    tabPageSMS.Text = @"SMS";
+                    _smsTabUnread = false;
+                    break;
             }
         }
 
@@ -577,6 +642,7 @@ namespace Komunikator
                         _skypeWebBrowser.Reload();
                         _slackOpgkWebBrowser.Reload();
                         _slackGisnetWebBrowser.Reload();
+                        _smsWebBrowser.Reload();
 
                         break;
 
@@ -606,6 +672,7 @@ namespace Komunikator
                     _skypeWebBrowser.Reload();
                     _slackOpgkWebBrowser.Reload();
                     _slackGisnetWebBrowser.Reload();
+                    _smsWebBrowser.Reload();
 
                     bHandled = true;
                     break;
